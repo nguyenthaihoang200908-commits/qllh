@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HỌC TẬP - Cổng Đăng Ký Học Sinh</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- TOAST THÔNG BÁO -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- ===================================================================== -->
+    <!-- MÀN HÌNH 1: XÁC MINH DANH TÍNH HỌC SINH (ẨN MẬT KHẨU & DANH SÁCH LỚP) -->
+    <!-- ===================================================================== -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 via-white to-indigo-50">
+        <div class="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-100 p-8 sm:p-10 animate-fade-in">
+            
+            <div class="flex items-center justify-between mb-6">
+                <div class="inline-flex items-center gap-2 bg-brand-50 text-brand-700 border border-brand-100 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                    <i class="fa-solid fa-user-graduate"></i> Cổng Học Sinh
+                </div>
+                <span class="login-sync-badge inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Đang kết nối...
+                </span>
+            </div>
+
+            <div class="mb-7">
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">HỌC TẬP</h1>
+                <p class="text-slate-500 text-sm mt-1.5 leading-relaxed">
+                    Nhập <strong>Tên lớp</strong> và <strong>Mật khẩu</strong> do giáo viên cung cấp để truy cập trang đăng ký nội dung học tập của lớp.
+                </p>
+            </div>
+
+            <!-- Form Đăng nhập Học sinh bảo mật (Không gợi ý mật khẩu hay liệt kê tên lớp) -->
+            <form id="form-login-student" onsubmit="handleStudentLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Tên lớp học</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                            <i class="fa-solid fa-users-rectangle"></i>
+                        </span>
+                        <input type="text" id="login-class-name" required autocomplete="off" placeholder="Nhập tên lớp được cấp..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 text-sm font-semibold uppercase focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Mật khẩu lớp</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="login-class-password" required autocomplete="off" placeholder="Nhập mật khẩu được cấp..." class="w-full pl-10 pr-11 py-3 rounded-xl border border-slate-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+                        <button type="button" onclick="toggleStudentPasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600" title="Hiện / Ẩn mật khẩu">
+                            <i id="login-student-eye-icon" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-student-login-submit" class="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl shadow-md shadow-brand-500/20 transition flex items-center justify-center gap-2 mt-2">
+                    <span>Xác minh & Đăng ký học tập</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-400">
+                <i class="fa-solid fa-shield-halved text-brand-500 shrink-0"></i>
+                <span>Nếu chưa có thông tin đăng nhập, vui lòng liên hệ trực tiếp giáo viên phụ trách lớp.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MÀN HÌNH 2: GIAO DIỆN ĐĂNG KÍ HỌC TẬP CỦA HỌC SINH                    -->
+    <!-- ===================================================================== -->
+    <div id="app-screen" class="hidden flex-col min-h-screen">
+        
+        <!-- Thanh điều hướng trên cùng -->
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16 gap-3">
+                    
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-600 to-brand-700 text-white flex items-center justify-center shadow-sm">
+                            <i class="fa-solid fa-book-open-reader text-lg"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-extrabold text-xl tracking-tight text-brand-700 leading-none">HỌC TẬP</span>
+                                <span id="firestore-status-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <i class="fa-solid fa-circle text-[7px] text-emerald-500"></i> Đã kết nối
+                                </span>
+                            </div>
+                            <span class="text-[11px] font-medium text-slate-400">Cổng đăng ký nội dung học tập</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2.5">
+                        <div class="flex items-center gap-2 bg-brand-50 border border-brand-100 px-3.5 py-1.5 rounded-xl">
+                            <i class="fa-solid fa-user-graduate text-brand-600"></i>
+                            <span class="text-xs font-bold text-brand-800">Lớp <span id="header-class-name"></span></span>
+                        </div>
+                        <button type="button" onclick="logout()" class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 transition flex items-center gap-1.5" title="Thoát khỏi lớp">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span class="hidden sm:inline">Thoát</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Nội dung chính -->
+        <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 animate-fade-in">
+            
+            <!-- Banner chào mừng lớp -->
+            <div class="bg-gradient-to-r from-brand-600 to-indigo-600 rounded-2xl p-6 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <div class="inline-flex items-center gap-2 bg-white/15 px-3 py-1 rounded-full text-xs font-semibold mb-2">
+                        <i class="fa-solid fa-list-check"></i> Đăng kí học tập
+                    </div>
+                    <h2 class="text-2xl font-bold">Xin chào tập thể Lớp <span id="stu-banner-class" class="underline decoration-brand-300"></span>!</h2>
+                    <p class="text-brand-100 text-sm mt-1">
+                        Tích chọn các bài học, nội dung học tập mà lớp mong muốn học và bấm <strong>Lưu đăng ký</strong> để gửi trực tiếp cho giáo viên.
+                    </p>
+                </div>
+                <div class="bg-white/15 backdrop-blur-sm rounded-2xl p-4 text-center min-w-[160px] border border-white/20">
+                    <span class="block text-xs text-brand-100 uppercase font-semibold">Đã tích chọn</span>
+                    <div class="text-3xl font-extrabold mt-0.5"><span id="stu-selected-periods">0</span> <span class="text-sm font-normal">tiết</span></div>
+                    <span class="text-xs text-brand-100">(<span id="stu-selected-count">0</span> bài học)</span>
+                </div>
+            </div>
+
+            <!-- Khung thời gian học tập giáo viên đã cấu hình cho lớp -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-calendar-week"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-800">Khung thời gian học tập dự kiến của lớp</h4>
+                        <p id="stu-schedule-summary" class="text-xs text-slate-500 mt-0.5">Đang tải thông tin...</p>
+                    </div>
+                </div>
+                <div id="stu-reg-status-badge"></div>
+            </div>
+
+            <!-- Danh sách bài học do giáo viên đưa lên -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Danh sách bài học / Nội dung học tập</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Bấm vào từng thẻ bài học để chọn hoặc bỏ chọn nội dung muốn học.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="studentSelectAllLessons(true)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Chọn tất cả</button>
+                        <button type="button" onclick="studentSelectAllLessons(false)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Bỏ chọn</button>
+                    </div>
+                </div>
+
+                <div id="stu-lessons-grid" class="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Render danh sách bài học realtime -->
+                </div>
+
+                <div class="p-5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="text-sm text-slate-600">
+                        Tổng cộng đã chọn: <strong id="stu-footer-count" class="text-brand-600">0</strong> nội dung (<strong id="stu-footer-periods" class="text-brand-600">0</strong> tiết học)
+                    </div>
+                    <button type="button" id="btn-save-student-reg" onclick="saveStudentRegistration()" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md shadow-brand-500/20 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Lưu đăng ký học tập
+                    </button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- FIREBASE FIRESTORE v11.6.0 & LOGIC HỌC SINH BẢO MẬT                   -->
+    <!-- ===================================================================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import {
+            getFirestore,
+            collection,
+            doc,
+            getDoc,
+            updateDoc,
+            onSnapshot
+        } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+        // Cấu hình Firebase dự án QUAN-LY-LOP-HOC
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2P8p0JUA4yex7-f34oBJMEu8KZjMCg_U",
+            authDomain: "quan-ly-lop-hoc-5a254.firebaseapp.com",
+            projectId: "quan-ly-lop-hoc-5a254",
+            storageBucket: "quan-ly-lop-hoc-5a254.firebasestorage.app",
+            messagingSenderId: "862050242762",
+            appId: "1:862050242762:web:eb36f02e1b7d945ccb2433",
+            measurementId: "G-QM8PEPBD9F"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const COL_LESSONS = 'hoctap_lessons';
+        const COL_CLASSES = 'hoctap_classes';
+
+        const DAYS_OF_WEEK = [
+            { id: 'T2', label: 'Thứ 2' },
+            { id: 'T3', label: 'Thứ 3' },
+            { id: 'T4', label: 'Thứ 4' },
+            { id: 'T5', label: 'Thứ 5' },
+            { id: 'T6', label: 'Thứ 6' },
+            { id: 'T7', label: 'Thứ 7' },
+            { id: 'CN', label: 'Chủ nhật' }
+        ];
+
+        // Tạo Document ID chuẩn hóa TENLOP__MATKHAU để truy vấn trực tiếp (không cần list toàn bộ classes)
+        function makeClassAccessKey(className, password) {
+            const cleanName = String(className || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+            const cleanPwd = String(password || '').trim();
+            return `${cleanName}__${cleanPwd}`;
+        }
+
+        // Phiên đăng nhập hiện tại của học sinh
+        let studentSession = {
+            accessKey: null,
+            className: null
+        };
+
+        // Dữ liệu lớp & bài học đồng bộ realtime
+        let currentClassData = null;
+        let lessonsList = [];
+        let draftSelectedIds = null;
+        let classDocUnsubscribe = null;
+
+        // =====================================================================
+        // TOAST THÔNG BÁO
+        // =====================================================================
+        window.showToast = function (message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const styles = {
+                success: 'bg-emerald-600 text-white border-emerald-700',
+                error: 'bg-rose-600 text-white border-rose-700',
+                warning: 'bg-amber-500 text-white border-amber-600',
+                info: 'bg-slate-800 text-white border-slate-900'
+            };
+            const icons = {
+                success: 'fa-circle-check',
+                error: 'fa-circle-xmark',
+                warning: 'fa-triangle-exclamation',
+                info: 'fa-circle-info'
+            };
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium animate-fade-in ${styles[type] || styles.info}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icons[type] || icons.info} text-base shrink-0"></i>
+                <span class="flex-1">${escapeHtml(message)}</span>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-6px)';
+                toast.style.transition = 'all 0.25s ease';
+                setTimeout(() => toast.remove(), 250);
+            }, 3200);
+        };
+
+        function updateConnectionBadges(connected) {
+            const loginBadges = document.querySelectorAll('.login-sync-badge');
+            const headerBadge = document.getElementById('firestore-status-badge');
+
+            loginBadges.forEach(el => {
+                el.className = connected
+                    ? 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200';
+                el.innerHTML = connected
+                    ? '<i class="fa-solid fa-circle text-[7px] text-emerald-500"></i> Sẵn sàng'
+                    : '<i class="fa-solid fa-triangle-exclamation"></i> Lỗi kết nối';
+            });
+
+            if (headerBadge) {
+                headerBadge.className = connected
+                    ? 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200';
+                headerBadge.innerHTML = connected
+                    ? '<i class="fa-solid fa-circle text-[7px] text-emerald-500"></i> Đã kết nối'
+                    : '<i class="fa-solid fa-triangle-exclamation"></i> Mất kết nối';
+            }
+        }
+
+        // Lắng nghe danh sách bài học do giáo viên đăng tải
+        function startLessonsListener() {
+            onSnapshot(
+                collection(db, COL_LESSONS),
+                (snapshot) => {
+                    const list = snapshot.docs.map(d => ({
+                        id: d.id,
+                        title: d.data().title || '',
+                        periods: Number(d.data().periods) || 1,
+                        order: Number(d.data().order) ?? 999
+                    }));
+                    list.sort((a, b) => a.order - b.order);
+                    lessonsList = list;
+                    updateConnectionBadges(true);
+                    if (studentSession.accessKey) {
+                        renderLessonCards();
+                    }
+                },
+                (err) => {
+                    console.error('Lỗi đồng bộ danh sách bài học:', err);
+                    updateConnectionBadges(false);
+                }
+            );
+        }
+
+        // =====================================================================
+        // XÁC MINH DANH TÍNH HỌC SINH BẰNG DOCUMENT ID TENLOP__MATKHAU
+        // =====================================================================
+        window.toggleStudentPasswordVisibility = function () {
+            const input = document.getElementById('login-class-password');
+            const icon = document.getElementById('login-student-eye-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-solid fa-eye';
+            }
+        };
+
+        window.handleStudentLogin = async function (e) {
+            e.preventDefault();
+            const classInput = document.getElementById('login-class-name').value.trim().toUpperCase();
+            const passInput = document.getElementById('login-class-password').value.trim();
+
+            if (!classInput || !passInput || classInput.includes('__') || passInput.includes('__') || classInput.includes('/') || passInput.includes('/')) {
+                showToast('Tên lớp hoặc mật khẩu không đúng định dạng!', 'error');
+                return;
+            }
+
+            const submitBtn = document.getElementById('btn-student-login-submit');
+            const originalHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xác minh...`;
+
+            try {
+                const accessKey = makeClassAccessKey(classInput, passInput);
+                const classRef = doc(db, COL_CLASSES, accessKey);
+                const snap = await getDoc(classRef);
+
+                // Thông báo lỗi chung để không tiết lộ tên lớp có tồn tại hay không
+                if (!snap.exists()) {
+                    showToast('Tên lớp hoặc mật khẩu không chính xác!', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
+                    return;
+                }
+
+                const data = snap.data();
+                if (String(data.password) !== passInput || (data.name || '').toUpperCase() !== classInput) {
+                    showToast('Tên lớp hoặc mật khẩu không chính xác!', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
+                    return;
+                }
+
+                studentSession = {
+                    accessKey: accessKey,
+                    className: (data.name || classInput).toUpperCase()
+                };
+                currentClassData = {
+                    name: studentSession.className,
+                    selectedLessonIds: Array.isArray(data.selectedLessonIds) ? data.selectedLessonIds : [],
+                    registrationSubmitted: Boolean(data.registrationSubmitted),
+                    scheduleConfig: data.scheduleConfig || { days: ['T2', 'T4', 'T6'], periodsPerSession: 3, durationWeeks: 1 }
+                };
+                draftSelectedIds = [...currentClassData.selectedLessonIds];
+
+                subscribeCurrentClassDoc(accessKey);
+                enterStudentPortal();
+                showToast(`Chào mừng học sinh Lớp ${studentSession.className}!`, 'success');
+            } catch (err) {
+                console.error('Lỗi xác minh học sinh:', err);
+                showToast('Tên lớp hoặc mật khẩu không chính xác, hoặc lỗi kết nối.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalHtml;
+            }
+        };
+
+        // Lắng nghe realtime duy nhất document của lớp học sinh đã đăng nhập
+        function subscribeCurrentClassDoc(accessKey) {
+            if (classDocUnsubscribe) classDocUnsubscribe();
+
+            classDocUnsubscribe = onSnapshot(
+                doc(db, COL_CLASSES, accessKey),
+                (snap) => {
+                    if (!snap.exists()) {
+                        // Giáo viên vừa đổi tên lớp hoặc mật khẩu -> yêu cầu đăng nhập lại với thông tin mới
+                        logout(false);
+                        showToast('Thông tin lớp hoặc mật khẩu đã được giáo viên cập nhật. Vui lòng đăng nhập lại!', 'warning');
+                        return;
+                    }
+                    const d = snap.data();
+                    currentClassData = {
+                        name: (d.name || studentSession.className).toUpperCase(),
+                        selectedLessonIds: Array.isArray(d.selectedLessonIds) ? d.selectedLessonIds : [],
+                        registrationSubmitted: Boolean(d.registrationSubmitted),
+                        scheduleConfig: d.scheduleConfig || { days: ['T2', 'T4', 'T6'], periodsPerSession: 3, durationWeeks: 1 }
+                    };
+                    renderStudentPortalInfo();
+                },
+                (err) => {
+                    console.error('Lỗi đồng bộ dữ liệu lớp:', err);
+                }
+            );
+        }
+
+        function enterStudentPortal() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            document.getElementById('app-screen').classList.add('flex');
+
+            document.getElementById('header-class-name').textContent = studentSession.className;
+            document.getElementById('stu-banner-class').textContent = studentSession.className;
+
+            renderStudentPortalInfo();
+            renderLessonCards();
+        }
+
+        window.logout = function (showNotice = true) {
+            if (classDocUnsubscribe) {
+                classDocUnsubscribe();
+                classDocUnsubscribe = null;
+            }
+            studentSession = { accessKey: null, className: null };
+            currentClassData = null;
+            draftSelectedIds = null;
+
+            document.getElementById('login-class-name').value = '';
+            document.getElementById('login-class-password').value = '';
+            document.getElementById('app-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('flex');
+            document.getElementById('login-screen').classList.remove('hidden');
+
+            if (showNotice) {
+                showToast('Đã thoát khỏi cổng đăng ký học sinh.', 'info');
+            }
+        };
+
+        // =====================================================================
+        // GIAO DIỆN ĐĂNG KÍ HỌC TẬP CỦA HỌC SINH
+        // =====================================================================
+        function renderStudentPortalInfo() {
+            if (!currentClassData) return;
+            const cfg = currentClassData.scheduleConfig || { days: [], periodsPerSession: 3, durationWeeks: 1 };
+            const dayNames = (cfg.days || []).map(d => DAYS_OF_WEEK.find(x => x.id === d)?.label || d).join(', ');
+
+            document.getElementById('stu-schedule-summary').textContent =
+                `Học vào: ${dayNames || 'Chưa thiết lập'} • ${cfg.periodsPerSession} tiết/buổi • Thời gian: ${cfg.durationWeeks} tuần`;
+
+            const statusBadge = document.getElementById('stu-reg-status-badge');
+            if ((currentClassData.selectedLessonIds || []).length > 0 || currentClassData.registrationSubmitted) {
+                statusBadge.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700"><i class="fa-solid fa-circle-check"></i> Đã lưu đăng ký (${currentClassData.selectedLessonIds.length} bài)</span>`;
+            } else {
+                statusBadge.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700"><i class="fa-solid fa-clock"></i> Chưa lưu đăng ký</span>`;
+            }
+        }
+
+        function renderLessonCards() {
+            const grid = document.getElementById('stu-lessons-grid');
+            const selectedIds = draftSelectedIds || [];
+
+            if (lessonsList.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 text-sm">Giáo viên chưa đăng tải bài học nào.</div>`;
+                updateSelectionCounters();
+                return;
+            }
+
+            grid.innerHTML = lessonsList.map((lesson, idx) => {
+                const isSelected = selectedIds.includes(lesson.id);
+                return `
+                    <div onclick="toggleStudentLesson('${lesson.id}')" 
+                         class="cursor-pointer rounded-2xl p-4 border-2 transition-all select-none flex flex-col justify-between gap-3 ${isSelected ? 'border-brand-600 bg-brand-50/60 shadow-sm' : 'border-slate-200 bg-white hover:border-brand-300'}">
+                        <div class="flex items-start justify-between gap-3">
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-lg ${isSelected ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600'}">
+                                Bài #${idx + 1}
+                            </span>
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center border ${isSelected ? 'bg-brand-600 border-brand-600 text-white' : 'border-slate-300 bg-white'}">
+                                ${isSelected ? '<i class="fa-solid fa-check text-xs"></i>' : ''}
+                            </div>
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-sm leading-snug">${escapeHtml(lesson.title)}</h4>
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                            <span class="text-slate-500 font-medium"><i class="fa-regular fa-clock mr-1 text-brand-500"></i>Thời lượng:</span>
+                            <span class="font-bold text-brand-700 bg-brand-100/70 px-2 py-0.5 rounded-md">${lesson.periods} tiết</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            updateSelectionCounters();
+        }
+
+        window.toggleStudentLesson = function (lessonId) {
+            if (!Array.isArray(draftSelectedIds)) draftSelectedIds = [];
+            const idx = draftSelectedIds.indexOf(lessonId);
+            if (idx > -1) {
+                draftSelectedIds.splice(idx, 1);
+            } else {
+                draftSelectedIds.push(lessonId);
+            }
+            renderLessonCards();
+        };
+
+        window.studentSelectAllLessons = function (selectAll) {
+            draftSelectedIds = selectAll ? lessonsList.map(l => l.id) : [];
+            renderLessonCards();
+        };
+
+        function updateSelectionCounters() {
+            const selectedIds = draftSelectedIds || [];
+            const selectedLessons = lessonsList.filter(l => selectedIds.includes(l.id));
+            const totalPeriods = selectedLessons.reduce((sum, l) => sum + Number(l.periods || 0), 0);
+
+            document.getElementById('stu-selected-count').textContent = selectedLessons.length;
+            document.getElementById('stu-selected-periods').textContent = totalPeriods;
+            document.getElementById('stu-footer-count').textContent = selectedLessons.length;
+            document.getElementById('stu-footer-periods').textContent = totalPeriods;
+        }
+
+        window.saveStudentRegistration = async function () {
+            if (!studentSession.accessKey) return;
+
+            const saveBtn = document.getElementById('btn-save-student-reg');
+            const originalHtml = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...`;
+
+            try {
+                // Lọc chỉ giữ các lessonId còn tồn tại
+                const validIds = (draftSelectedIds || []).filter(id => lessonsList.some(l => l.id === id));
+
+                // Chỉ cập nhật các trường được phép theo Firestore Security Rules
+                await updateDoc(doc(db, COL_CLASSES, studentSession.accessKey), {
+                    selectedLessonIds: validIds,
+                    updatedAt: new Date().toISOString()
+                });
+
+                if (currentClassData) {
+                    currentClassData.selectedLessonIds = validIds;
+                    currentClassData.registrationSubmitted = true;
+                }
+                renderStudentPortalInfo();
+                showToast(`Đã lưu đăng ký ${validIds.length} bài học cho Lớp ${studentSession.className}!`, 'success');
+            } catch (err) {
+                console.error('Lỗi lưu đăng ký học sinh:', err);
+                showToast('Không thể lưu đăng ký lên Firestore. Vui lòng thử lại!', 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalHtml;
+            }
+        };
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Khởi chạy lắng nghe danh sách bài học khi tải trang
+        startLessonsListener();
+    </script>
+</body>
+</html>
